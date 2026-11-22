@@ -91,6 +91,7 @@
 .council/tools/tests/fixtures/check_drift/phase4/ru_table_no_hyphens.md
 .council/tools/tests/fixtures/check_drift/phase4/report_fail2.json
 .council/tools/tests/fixtures/check_drift/phase4/report_fail0.json
+.council/tools/tests/fixtures/check_drift/phase4/empty-glossary.md
 .council/tools/tests/fixtures/check_drift/phase4/drift_different.md
 .council/tools/tests/fixtures/check_drift/phase4/drift_identical.md
 .council/tools/tests/fixtures/check_drift/phase4/en_flexion.md

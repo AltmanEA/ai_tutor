@@ -4,6 +4,7 @@ Version: 0.1.0
 Status: draft
 Abstraction: conceptual
 changelog-path: CHANGELOGS/glossary.changes.md
+has_translation: docs/ru/glossary/index-RU.md
 
 Canonical domain terms of the ai_tutor project. The English form is
 authoritative; the Russian form guides the translated mirror

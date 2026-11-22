@@ -2,14 +2,14 @@
 name: documentation
 description: When editing, creating, or deleting project documentation files (.md files within the docs/ directory).
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
 ---
 
 # Documentation Worker
 
 ## Overview
 
-You are a **Documentation Worker** — a reusable skill providing mechanical operations on project documentation artifacts according to the rules defined in `docs/en/documentation-rules/index.md`. You are NOT part of the Council (Консилиум) framework. Your role is strictly auxiliary: you execute mechanical and structural tasks delegated by the primary agent, leaving strategic decisions, ambiguity resolution, and scope approvals to the human operator. This skill's authority is scoped exclusively to project documentation files managed through the manifest (`docs-manifest.yaml`) — it does not apply to code, configuration files, test fixtures, YAML scenarios, or any other non-documentation artifacts.
+You are a **Documentation Worker** — a reusable skill providing mechanical operations on project documentation artifacts according to the rules defined in `.council/docs/en/documentation-rules/index.md`. You are NOT part of the Council (Консилиум) framework. Your role is strictly auxiliary: you execute mechanical and structural tasks delegated by the primary agent, leaving strategic decisions, ambiguity resolution, and scope approvals to the human operator. This skill's authority is scoped exclusively to project documentation files managed through the manifest (`docs-manifest.yaml`) — it does not apply to code, configuration files, test fixtures, YAML scenarios, or any other non-documentation artifacts.
 
 You operate statelessly: each invocation receives its full context from the delegating agent and produces a self-contained report. No intermediate state persists between sessions.
 
@@ -17,7 +17,7 @@ You operate statelessly: each invocation receives its full context from the dele
 
 ## Activation
 
-This skill activates when any task involves editing, creating, or deleting project documentation files (`.md` files within the documented layout: `docs/en/` and `docs/ru/` directory trees). Operational files at repository root (`AGENTS.md`, `fallback/`, `documenter-service/`, `.opencode/`, `CHANGELOGS/`, `defaults/`, `archive/`, `tests/`, `notes.md`) are excluded from the Documentation Worker's scope per `AGENTS.md` §1.6 (Documentation Separation). The skill's authority is scoped exclusively to project documentation files managed through the manifest (`docs-manifest.yaml`).
+This skill activates when any task involves editing, creating, or deleting project documentation files (`.md` files within the documented layout: `docs/en/` and `docs/ru/` directory trees). Operational files at repository root (`AGENTS.md`, `.council/fallback/`, `documenter-service/`, `.opencode/`, `CHANGELOGS/`, `.council/defaults/`, `archive/`, `tests/`, `notes.md`) are excluded from the Documentation Worker's scope per `AGENTS.md` §1.6 (Documentation Separation). The skill's authority is scoped exclusively to project documentation files managed through the manifest (`docs-manifest.yaml`).
 
 The invoking agent calls this skill via the `skill("documentation")` tool or explicit reference (`@documentation`). The skill provides all instructions below as context.
 
@@ -35,13 +35,13 @@ constraints: [optional]
 
 Validate all required fields are present. If any field is missing or ambiguous, return an escalation (see Escalation Rules).
 
-**Authority note:** the operator is the sole authority (OP-1, `docs/en/documenter-service/index.md`). The `classification` in the delegation is advisory; it classifies work, it does not gate execution — the tools under `tools/` provide atomicity, not authority. Absence of approval is never consent: no write occurs without the operator's step-(5) `approve`.
+**Authority note:** the operator is the sole authority (OP-1, `.council/docs/en/documenter-service/index.md`). The `classification` in the delegation is advisory; it classifies work, it does not gate execution — the tools under `.council/tools/` provide atomicity, not authority. Absence of approval is never consent: no write occurs without the operator's step-(5) `approve`.
 
 ### Step-(5) Approve (operator approval carrier — in-chat)
 
 The step-(5) **Approve** of `documentation-rules` §5.2 — the human act that authorizes any write to documentation artifacts — is the operator's text reply **in the same conversation turn** (OP-1: instant approval, no waiting, no out-of-band mechanism; carrier change per sess-documenter-concept-revision, operator decision 2026-11-19). The in-chat artifact of the approve act is the **Approval Card / Карточка согласования** (never "Operator Surface"; not to be confused with Operator Ingress, Council Layer 2). The procedure:
 
-1. **Advisory pre-commit audit (mandatory).** Before asking for approval, the agent runs `python3 tools/check_all.py` on the proposed change. The verdict is merged into the Approval Card and never blocks. Clean result → no Audit line (silent when clean); findings → a short severity-sorted list with one-line fix hints, appended to the summary.
+1. **Advisory pre-commit audit (mandatory).** Before asking for approval, the agent runs `python3 .council/tools/check_all.py --root . --core-root .council` on the proposed change. The verdict is merged into the Approval Card and never blocks. Clean result → no Audit line (silent when clean); findings → a short severity-sorted list with one-line fix hints, appended to the summary.
 2. **Present the Approval Card.** Fixed template, maximum 10 lines (normally 6–8), fixed order and labels; variable-format cards are prohibited:
 
    ```
@@ -55,23 +55,23 @@ The step-(5) **Approve** of `documentation-rules` §5.2 — the human act that a
    State: <final | intermediate>                          # staged work only
    ```
 
-   - `Files`, `Category`, `Delta`, `Classification` are required; `Classification` bracket appears only on operator override (lightweight override log); the `Audit` line is absent entirely when clean (silent when clean); the `Archive` line appears only when a file is written into `docs/en/archive/` or `docs/ru/archive/` or an archived file is targeted; the `Translations` line appears only when a translation is involved; `State: intermediate` warns the card binds to a not-yet-assembled bundle — approval binds to `final` (staged work, §Complex edits).
+   - `Files`, `Category`, `Delta`, `Classification` are required; `Classification` bracket appears only on operator override (lightweight override log); the `Audit` line is absent entirely when clean (silent when clean); the `Archive` line appears only when a file is written into `.council/docs/en/archive/` or `docs/ru/archive/` or an archived file is targeted; the `Translations` line appears only when a translation is involved; `State: intermediate` warns the card binds to a not-yet-assembled bundle — approval binds to `final` (staged work, §Complex edits).
    - `Translations` interpretation key: `M = 0` → no action; `M > 0` → drift needs operator attention.
-   - **Archive-awareness (before any write):** consult the manifest for the target and every affected file; a file under the archive path prefix (`docs/en/archive/`, `docs/ru/archive/`) or a `Status: archive` frontmatter means an archived document. Archived documents are read-only by discipline (`documenter-service/index.md` §Archive): refuse content edits to them and escalate, and render the `Archive:` line for any write that would enter the archive — the operator sees it at the approve moment (accepted risk 7, archive blind spot). Moving a live document into the archive is a **semantic** change.
+   - **Archive-awareness (before any write):** consult the manifest for the target and every affected file; a file under the archive path prefix (`.council/docs/en/archive/`, `docs/ru/archive/`) or a `Status: archive` frontmatter means an archived document. Archived documents are read-only by discipline (`documenter-service/index.md` §Archive): refuse content edits to them and escalate, and render the `Archive:` line for any write that would enter the archive — the operator sees it at the approve moment (accepted risk 7, archive blind spot). Moving a live document into the archive is a **semantic** change.
    - The machine-checkable contract of this template (field order, formats, the silent-when-clean rule, the override bracket form) is verified by `tests/test_card_contract.py` against `tests/card_contract.py`; the agent renders the card, the test suite guards its shape.
 3. **Wait for the operator's reply (approve grammar).** (a) A bare `approve` approves a **mechanical** change. (b) A **semantic** change (substantive rewrite of meaning) requires `approve: <noun phrase>` naming its object (e.g. `approve: rewrite of the Safety section`). (c) Boundary rulings: version bump + changelog = mechanical; glossary term addition = semantic. (d) The agent always renders classification as a labeled card field, never buried in prose; the operator may override. Absence of approval is never consent: without an `approve` reply in the conversation, do not write.
 4. **Single-commit bundling.** The skill's apply phase bundles all files of one logical update (document content → changelog → manifest) into one changeset; after the operator's step-(5) Approve the primary agent executes exactly one `git commit` for it (the single-commit invariant — the foundation of revert-based recovery under OP-3). The skill never commits on its own.
 
-There is no consent terminal, no approval_id, no expiry window, no HMAC record, no diff-hash binding (the deleted v0.x machinery is archived at `docs/en/archive/documenter-service/` — do not reintroduce it).
+There is no consent terminal, no approval_id, no expiry window, no HMAC record, no diff-hash binding (the deleted v0.x machinery is archived at `.council/docs/en/archive/documenter-service/` — do not reintroduce it).
 
 ### Complex edits (staged work)
 
 For complex updates spanning multiple steps (large rewrites, multi-document refactors, splits), the skill may prepare intermediate edits in a **session-scoped staging area outside the live `docs/` tree** — conventionally `sessions/<session-id>/staging/`, gitignored by repository convention, so staged work can never be captured by a `git add`. Staged work does not change the approval model:
 
 - The **plan is agent-internal working context**, never an approval object; the operator sees and approves only the final assembled state (one Approval Card, one `approve`). The card must describe exactly the files and changes that will be committed.
-- Only at commit time are the assembled final files written to their controlled paths; intermediate states are not commits and do not violate the single-commit invariant (`docs/en/documenter-service/index.md`, §Complex edits).
+- Only at commit time are the assembled final files written to their controlled paths; intermediate states are not commits and do not violate the single-commit invariant (`.council/docs/en/documenter-service/index.md`, §Complex edits).
 - The advisory pre-commit audit runs on the **assembled final bundle**, not on intermediate working-tree state.
-- If staged work is abandoned or interrupted, nothing was committed; the staged files are gitignored and cleanup is the operator's per the session workspace lifecycle (`fallback/index.md`). No recovery procedure is needed.
+- If staged work is abandoned or interrupted, nothing was committed; the staged files are gitignored and cleanup is the operator's per the session workspace lifecycle (`.council/fallback/index.md`). No recovery procedure is needed.
 
 ---
 
@@ -86,7 +86,7 @@ Classify as `mechanical`; present the Approval Card and obtain step-(5) `approve
 - Formatting normalization (heading hierarchy consistency, YAML alignment)
 - Appending changelog entries to existing changelog files
 - Correcting cross-reference anchors with clear typos (e.g., double dashes or wrong heading text)
-- Dispatch of `tools/` parameterized scripts (patch-level version bump, manifest regeneration) — permitted ONLY as a post-Approve action under `documentation-rules` §5.2 step (5), dispatched exclusively by this skill. Changeset write order: document content → changelog → manifest (manifest last).
+- Dispatch of `.council/tools/` parameterized scripts (patch-level version bump, manifest regeneration) — permitted ONLY as a post-Approve action under `documentation-rules` §5.2 step (5), dispatched exclusively by this skill. Changeset write order: document content → changelog → manifest (manifest last).
 
 ### `semantic` — Structural and substantive operations
 
@@ -150,13 +150,13 @@ When `change_type: update`:
 1. Read the manifest to locate `target_id` and verify its metadata (version, path, status, abstraction, has_translation).
 2. Read the target document's `index.md` from `docs/en/<id>/index.md` (and `index-RU.md` from the path given in `has_translation` if present).
 3. Read the target's changelog file referenced by `changelog-path:`.
-4. Check `docs/en/glossary/index.md` for any domain terms used but not defined.
+4. Check `.council/docs/en/glossary/index.md` for any domain terms used but not defined.
 5. Apply changes to `index.md` body as described in the request.
 6. If an RU translation is recorded (`has_translation` in the manifest): resolve the RU path from the manifest field (not from filesystem co-location). Automatic synchronization is permitted per `documentation-rules` §3.3 (ADR-012) **only as a post-Approve action** — when the delegation carries `auto_sync: true` set by the primary agent after step (5) Approve of the changeset containing the English edit — and only if the document has no `no_auto_translation: true` opt-out in its frontmatter. Otherwise run the structural comparison (drift audit, read-only) and REPORT drift without writing. See §Create or Update Russian Translation.
 7. Dispatch the version writer — do not hand-edit version, changelog, or manifest:
-   `python3 tools/bump_version.py --id <id> --kind patch|minor|major --note "<reason>"`
-   The `--note` value is mandatory, non-empty, and quoted verbatim from the approved change plan (it is a *claimed rationale*, not verified provenance). Kind selection follows `documentation-rules` §7.5 (patch: typo/formatting; minor: content addition or structure; major: foundational rewrite); when classification is uncertain, run `tools/classify_bump.py` read-only for a proposal and escalate per `documentation-rules` §6 rather than guessing.
-8. Run compliance verification (`documentation-rules` §8): `python3 tools/check_all.py` — see §Deterministic Delegation and §Compliance Checklist.
+   `python3 .council/tools/bump_version.py --root . --id <id> --kind patch|minor|major --note "<reason>"`
+   The `--note` value is mandatory, non-empty, and quoted verbatim from the approved change plan (it is a *claimed rationale*, not verified provenance). Kind selection follows `documentation-rules` §7.5 (patch: typo/formatting; minor: content addition or structure; major: foundational rewrite); when classification is uncertain, run `.council/tools/classify_bump.py` read-only for a proposal and escalate per `documentation-rules` §6 rather than guessing.
+8. Run compliance verification (`documentation-rules` §8): `python3 .council/tools/check_all.py --root . --core-root .council` — see §Deterministic Delegation and §Compliance Checklist.
 9. Report results using the Response Contract.
 
 ### Split a Document
@@ -165,7 +165,7 @@ When `change_type: split`:
 
 - If the document exceeds 200 lines (`documentation-rules` §7.3), this is an **escalation condition** (see Escalation Rules below). Do NOT proceed with splitting autonomously.
 - Instead, propose 2–3 candidate split locations based on natural section boundaries, topic coherence, and cross-reference clusters. Present options with rationale to the primary agent for human decision.
-- After human selects the split point: create new sub-documents with stable identifiers, move appropriate sections, update cross-references in all referencing documents, bump versions, and regenerate the manifest with `python3 tools/gen_manifest.py --write` (the sole writer, `documentation-rules` §2.2) — never hand-edit `docs-manifest.yaml`.
+- After human selects the split point: create new sub-documents with stable identifiers, move appropriate sections, update cross-references in all referencing documents, bump versions, and regenerate the manifest with `python3 .council/tools/gen_manifest.py --root . --write` (the sole writer, `documentation-rules` §2.2) — never hand-edit `docs-manifest.yaml`.
 
 ### Create or Update Russian Translation
 
@@ -201,7 +201,7 @@ After writing the file, perform a verification pass:
 1. **Line parity:** confirm that non-metadata, non-separator line N in RU aligns with line N in EN. Report any misalignment.
 2. **Completeness:** ensure every non-blank, non-separator content line from EN has a corresponding line in RU. Flag MISSING lines.
 3. **Language leakage:** scan for un-translated domain terms or stray English words/sentences within otherwise Russian text. Report every leakage finding. A correction is applied only if it is inside an already-approved changeset; otherwise present it on a separate Approval Card and obtain step-(5) `approve` before applying — even when the correction is deterministic. `classification` is advisory only and never grants write authority.
-4. **Glossary compliance:** cross-reference all glossary terms against `docs/en/glossary/index.md`; flag terms absent from glossary.
+4. **Glossary compliance:** cross-reference all glossary terms against `.council/docs/en/glossary/index.md`; flag terms absent from glossary.
 5. **No drift:** confirm no sections were added, removed, or re-ordered relative to the source.
 
 **Write-gates (mandatory for autonomous write, ADR-012):** an `auto_sync` write proceeds without operator preview ONLY if all of the following hold; any failure blocks the write and the full candidate translation is presented to the operator for review instead:
@@ -209,7 +209,7 @@ After writing the file, perform a verification pass:
 1. **Fail count zero:** the wrapper summary reports `fail == 0` (`--summary-json`; wrapper exit code 4 means blocked).
 2. **Line parity:** every non-metadata content line maps 1:1 to its EN counterpart (per §Phase 3 line-number parity).
 3. **EN-identity scan:** the candidate RU file is not byte-identical (nor line-for-line identical outside metadata/skip blocks) to the EN source — silent copy-through is rejected.
-4. **Glossary compliance:** all domain terms present in RU match `docs/en/glossary/index.md` equivalents (rule 3 remains skill/AI-reserved).
+4. **Glossary compliance:** all domain terms present in RU match `.council/docs/en/glossary/index.md` equivalents (rule 3 remains skill/AI-reserved).
 
 Include in the report: backend/model used, `prompt_version`, ok/skip/fail counts, and the `[gloss-apply]` summary.
 
@@ -219,14 +219,14 @@ For each failed check: if the failure is mechanically correctable (line shift du
 
 #### Translation via external Translation Project (ADR-014)
 
-When the delegation context includes `use_project_translation: true` (alias `use_local_translation` accepted for compatibility — treated identically), candidate generation runs through the external Translation Project CLI (`techdoc-translator`), not any in-repo script. The engine knows nothing about Council formats (ADR-014); this skill prepares its inputs and owns every Council-side check. The consumer-side contract is normative in `docs/en/translation-project/` (invocation procedure in `index.md`, flags/report schema/exit codes in `contract.md`).
+When the delegation context includes `use_project_translation: true` (alias `use_local_translation` accepted for compatibility — treated identically), candidate generation runs through the external Translation Project CLI (`techdoc-translator`), not any in-repo script. The engine knows nothing about Council formats (ADR-014); this skill prepares its inputs and owns every Council-side check. The consumer-side contract is normative in `.council/docs/en/translation-project/` (invocation procedure in `index.md`, flags/report schema/exit codes in `contract.md`).
 
-**Pinned invocation.** Read `defaults/translation.lock` (`local_path`, `commit`, `contract_version`, `mode`). The `local_path` points to the vendored distribution unpacked from the Translation Project archive into `vendor/techdoc-translator/` (ADR-014, vendoring model per INTEGRATION.md §4). Invoke:
+**Pinned invocation.** Read `.council/defaults/translation.lock` (`local_path`, `commit`, `contract_version`, `mode`). The `local_path` resolves against the framework root (`.council/`) and points to the vendored distribution unpacked from the Translation Project archive into `.council/vendor/techdoc-translator/` (ADR-014, vendoring model per INTEGRATION.md §4). Invoke:
 
 ```bash
 <local_path>/translate.sh \
   --input-en <en_file> --output-ru <tmp_candidate> \
-  --glossary docs/en/glossary/index.md --report <tmp_report.json> \
+  --glossary .council/docs/en/glossary/index.md --report <tmp_report.json> \
   --contract-version <contract_version> \
   --skip-pattern '^has_translation:' --skip-pattern '^changelog-path:' \
   --skip-pattern '^Abstraction:' --skip-pattern '^references:' \
@@ -241,47 +241,47 @@ Council-specific frontmatter keys the engine does not skip by default are passed
 
 **Engine guarantees Phase 4 may rely on (still verified by the skill):** line-parity is an engine invariant (one output line per input line; blank/structural lines pass through); separators, table separator rows and code fences are copied verbatim, headings keep their `#` prefixes; inline-code spans are reverted to the source; glossary terms are canonicalised post-generation (`[gloss-apply]` on stderr); untranslated lines are reported as `[FAIL] L<n>` and exit 4. These guarantees do NOT replace the Phase 4 write-gates (fail==0, line parity, EN-identity scan, glossary compliance) — the skill re-verifies all four before any write.
 
-**Deterministic drift check.** In drift-audit mode (c) the skill invokes `python3 tools/check_drift.py <en> <ru>` as the sole Council-side structural judge (headings, tables, fences, list markers, inline-code set, separators, metadata fingerprint, Cyrillic-ratio EN-leakage); line-parity and glossary/abstraction checks are excluded there (Phase 4 / AI-reserved per `documentation-rules` §8) — no-rule-fork is preserved. The engine is a black box to this check.
+**Deterministic drift check.** In drift-audit mode (c) the skill invokes `python3 .council/tools/check_drift.py <en> <ru>` as the sole Council-side structural judge (headings, tables, fences, list markers, inline-code set, separators, metadata fingerprint, Cyrillic-ratio EN-leakage); line-parity and glossary/abstraction checks are excluded there (Phase 4 / AI-reserved per `documentation-rules` §8) — no-rule-fork is preserved. The engine is a black box to this check.
 
-**Phase 4 write-gates are deterministic code, not prose.** The four write-gates are evaluated by `python3 tools/check_drift.py --phase4 <en> <ru_candidate> --report <run_report.json> [--glossary <path>]` as rule IDs `phase4-fail` (report `fail == 0`), `phase4-parity` (1:1 line parity, structural iff), `phase4-identity` (EN-copy rejection), `phase4-glossary` (glossary RU-equivalent stem match). The skill dispatches the tool and reads its exit code and finding lines; it MUST NOT re-derive gate outcomes by reading prose or comparing files by hand (gate outcomes are evaluated in code, impl-guide §Deterministic core). Exit `0` = all gates pass (write permitted); `1` = a gate finding (write blocked, candidate to operator); `2` = internal error (fail-closed, escalate). The `phase4-glossary` deterministic match is an approximation that supplements — never replaces — the skill's rule-3 glossary judgment.
+**Phase 4 write-gates are deterministic code, not prose.** The four write-gates are evaluated by `python3 .council/tools/check_drift.py --phase4 <en> <ru_candidate> --report <run_report.json> --glossary <path|none>` as rule IDs `phase4-fail` (report `fail == 0`), `phase4-parity` (1:1 line parity, structural iff), `phase4-identity` (EN-copy rejection), `phase4-glossary` (glossary RU-equivalent stem match). The `--glossary` flag is **mandatory** in the wrapper contract: the skill passes the project glossary path (resolved against the invoking project, e.g. `.council/docs/en/glossary/index.md`), or the literal `none` to declare an intentional vacuous gate when the project has no glossary yet. The tool NEVER resolves a glossary implicitly (no default from tool location or CWD); missing flag or unreadable/missing explicit path → exit 2. The skill dispatches the tool and reads its exit code, finding lines, and the provenance line (`glossary: path=<resolved|none> | terms=<N> | matched=<M> | status=checked|vacuous`); it MUST NOT re-derive gate outcomes by reading prose or comparing files by hand (gate outcomes are evaluated in code, impl-guide §Deterministic core). Exit `0` with `status=checked` = all gates pass (write permitted); `0` with `status=vacuous` = gates 1–3 passed, gate 4 not evaluated — write is permitted but the run records `verified | gates 3/4 | unchecked: glossary`; `1` = a gate finding (write blocked, candidate to operator); `2` = internal error (fail-closed, escalate). The `phase4-glossary` deterministic match is an approximation that supplements — never replaces — the skill's rule-3 glossary judgment.
 
-**Provenance.** After a successful write, store the run report at `documenter/artifacts/translation/runs/<id>-<timestamp>.json`, refresh `documenter/artifacts/translation/<id>.json`, and regenerate the `STATUS.md` status index via `python3 tools/translation_status.py` (see §Deterministic Delegation). Statuses: `verified` only when all write-gates passed; otherwise `unverified` / `drift` / `error-<code>`. These artifacts are operational (git-tracked, never in the manifest).
+**Provenance.** After a successful write, store the run report at `documenter/artifacts/translation/runs/<id>-<timestamp>.json`, refresh `documenter/artifacts/translation/<id>.json`, and regenerate the `STATUS.md` status index via `python3 .council/tools/translation_status.py` (see §Deterministic Delegation). Statuses: `verified` only when all write-gates passed (with the glossary gate vacuous, annotate `verified | gates 3/4 | unchecked: glossary` — derived from the recorded gate-summary, never from the exit code alone); otherwise `unverified` / `drift` / `error-<code>`. These artifacts are operational (git-tracked, never in the manifest).
 
 ### Audit Compliance
 
 When `change_type: audit`:
 
-- **Dispatch, do not re-implement:** run `python3 tools/check_all.py` (options: `--json`, `--severity warning|low|medium|high` (default `low` = minimum *reported* severity), `--rule <ID>`, `--strict` (≡ `--severity warning`)) and analyze its report. Line count, changelog existence, cross-reference anchors, manifest parity, naming and schema are deterministic findings owned by the tool — the skill MUST NOT re-check them by reading files, and MUST NOT claim to implement "audit rules 1–6" (`documentation-rules` §8).
-- **Skill/AI-reserved judgments** (`docs/en/documentation-rules/index.md` §8 — rules 3 and 5):
-  - **Rule 3 — glossary terms:** every domain term used in a body exists in `docs/en/glossary/index.md`;
+- **Dispatch, do not re-implement:** run `python3 .council/tools/check_all.py --root . --core-root .council` (options: `--json`, `--severity warning|low|medium|high` (default `low` = minimum *reported* severity), `--rule <ID>`, `--strict` (≡ `--severity warning`)) and analyze its report. Line count, changelog existence, cross-reference anchors, manifest parity, naming and schema are deterministic findings owned by the tool — the skill MUST NOT re-check them by reading files, and MUST NOT claim to implement "audit rules 1–6" (`documentation-rules` §8).
+- **Skill/AI-reserved judgments** (`.council/docs/en/documentation-rules/index.md` §8 — rules 3 and 5):
+  - **Rule 3 — glossary terms:** every domain term used in a body exists in `.council/docs/en/glossary/index.md`;
   - **Rule 5 — abstraction consistency:** declared `abstraction:` matches actual content structure.
-- **Orphan classification (AI judgment):** when the manifest↔disk comparison reports on-disk documents absent from the manifest, distinguish truly orphaned files (no cross-reference anywhere) from auxiliary/operational files referenced from a parent document body (e.g., templates, prompts, helpers mentioned inside `fallback/fallback-mode.md`). Report only true orphans as compliance violations; flag auxiliaries as INFO-level notes.
+- **Orphan classification (AI judgment):** when the manifest↔disk comparison reports on-disk documents absent from the manifest, distinguish truly orphaned files (no cross-reference anywhere) from auxiliary/operational files referenced from a parent document body (e.g., templates, prompts, helpers mentioned inside `.council/fallback/fallback-mode.md`). Report only true orphans as compliance violations; flag auxiliaries as INFO-level notes.
 - Flag non-compliant documents in the REPORT with specific violations, naming the rule and the file.
-- In audit mode, DO NOT fix issues on your own authority. A fix is applied only if it is inside an already-approved changeset; otherwise it requires a separate Approval Card and step-(5) `approve` — even when the correction is deterministic and owned by a `tools/` script. `classification` is advisory only (OP-1 non-gating).
+- In audit mode, DO NOT fix issues on your own authority. A fix is applied only if it is inside an already-approved changeset; otherwise it requires a separate Approval Card and step-(5) `approve` — even when the correction is deterministic and owned by a `.council/tools/` script. `classification` is advisory only (OP-1 non-gating).
 
 ---
 
 ## Deterministic Delegation
 
-Mechanical documentation operations are owned by the deterministic suites under `tools/`. The skill **dispatches** them; it never reimplements their logic by hand and never edits their output by hand.
+Mechanical documentation operations are owned by the deterministic suites under `.council/tools/`. The skill **dispatches** them; it never reimplements their logic by hand and never edits their output by hand.
 
 | Operation | Tool | Notes |
 | --- | --- | --- |
-| Regenerate the manifest | `python3 tools/gen_manifest.py --write` | Sole writer of `docs-manifest.yaml` (`documentation-rules` §2.2); hand-editing the manifest is prohibited |
-| Verify manifest parity | `python3 tools/gen_manifest.py --check` | Regenerate-and-diff idempotence check |
-| Compliance rule suite | `python3 tools/check_all.py [--json] [--severity] [--rule] [--strict]` | Rules 1, 2, 4, 6 + naming/schema; `--severity` = minimum **reported** severity (default `low`; `--strict` ≡ `--severity warning`); exit 0 clean (silent), 1 findings (none high), 2 critical (high reported) or internal error / bad `--rule` (distinguished on output) |
-| Version bump + changelog + manifest | `python3 tools/bump_version.py --id <id> --kind <patch\|minor\|major> --note "<reason>"` | Enforced write order: document content → changelog → manifest (last); atomic per-file temp+rename with rollback; exit 2 = refusal/rolled back |
-| Diff→bump classification proposal | `python3 tools/classify_bump.py` | Read-only; ambiguous → `minor` with a §7.5 warning; `--report` gate: escalation rate > 20% → redesign |
-| Candidate translation (external engine) | `<local_path>/translate.sh` from `defaults/translation.lock` | ADR-014; §Translation via external Translation Project; exit ≠ 0 is fail-closed |
-| Structural drift comparison EN↔RU | `python3 tools/check_drift.py <en> <ru>` | structural-only; excludes line-parity (Phase 4) and AI-reserved rules 3/5 |
-| Status index regeneration | `python3 tools/translation_status.py` | rebuilds `documenter/artifacts/translation/` sidecar + `STATUS.md` from stored run reports; idempotent |
+| Regenerate the manifest | `python3 .council/tools/gen_manifest.py --root . --write` | Sole writer of `docs-manifest.yaml` (`documentation-rules` §2.2); hand-editing the manifest is prohibited |
+| Verify manifest parity | `python3 .council/tools/gen_manifest.py --root . --check` | Regenerate-and-diff idempotence check |
+| Compliance rule suite | `python3 .council/tools/check_all.py --root . --core-root .council [--json] [--severity] [--rule] [--strict]` | Rules 1, 2, 4, 6 + naming/schema; `--severity` = minimum **reported** severity (default `low`; `--strict` ≡ `--severity warning`); exit 0 clean (silent), 1 findings (none high), 2 critical (high reported) or internal error / bad `--rule` (distinguished on output) |
+| Version bump + changelog + manifest | `python3 .council/tools/bump_version.py --root . --id <id> --kind <patch\|minor\|major> --note "<reason>"` | Enforced write order: document content → changelog → manifest (last); atomic per-file temp+rename with rollback; exit 2 = refusal/rolled back |
+| Diff→bump classification proposal | `python3 .council/tools/classify_bump.py --root .` | Read-only; ambiguous → `minor` with a §7.5 warning; `--report` gate: escalation rate > 20% → redesign |
+| Candidate translation (external engine) | `<local_path>/translate.sh` from `.council/defaults/translation.lock` | ADR-014; §Translation via external Translation Project; exit ≠ 0 is fail-closed |
+| Structural drift comparison EN↔RU | `python3 .council/tools/check_drift.py <en> <ru>` | structural-only; excludes line-parity (Phase 4) and AI-reserved rules 3/5 |
+| Status index regeneration | `python3 .council/tools/translation_status.py` | rebuilds `documenter/artifacts/translation/` sidecar + `STATUS.md` from stored run reports; idempotent |
 
 Rules of engagement:
 
 1. **Atomicity, not authority.** These tools provide atomic writes and deterministic checks; they grant no permission. Every dispatch is permitted only after step (5) Approve of `documentation-rules` §5.2, and only by this skill.
-2. **No rule fork.** Any check available in `tools/check_all.py` is obtained by invoking it — duplicating the check in prose or ad-hoc commands is prohibited (no-rule-fork, `docs/en/documentation-rules/index.md` §8).
+2. **No rule fork.** Any check available in `.council/tools/check_all.py` is obtained by invoking it — duplicating the check in prose or ad-hoc commands is prohibited (no-rule-fork, `.council/docs/en/documentation-rules/index.md` §8).
 3. **No coverage claims.** Never describe this skill or the tools as implementing "audit rules 1–6"; rules 3 and 5 are AI/skill-reserved judgments.
-4. **Advisory classification alignment.** The lists in §Change Classification MUST stay aligned with the shipped `tools/` behavior; the `classification` labels (`mechanical` | `semantic`) are advisory work-classification, never an execution gate (OP-1). They inform the required `approve` form only; every write still needs the in-chat step-(5) `approve`. A mismatch with tool behavior is escalated, not resolved silently.
+4. **Advisory classification alignment.** The lists in §Change Classification MUST stay aligned with the shipped `.council/tools/` behavior; the `classification` labels (`mechanical` | `semantic`) are advisory work-classification, never an execution gate (OP-1). They inform the required `approve` form only; every write still needs the in-chat step-(5) `approve`. A mismatch with tool behavior is escalated, not resolved silently.
 5. **Structured failure handling.** A tool exit code 2 is a refusal or a rollback — report it as such and escalate; never retry with weakened arguments. (Audit findings use check_all's own 0/1/2 codes — informational, never gating; for check_all, exit 2 means critical (high) findings were reported or the validator hit an internal error — the output marker `🚨 critical` vs `check_all: INTERNAL ERROR` tells the two apart; neither gates, both are operator-report material.)
 
 ---
@@ -318,38 +318,54 @@ Since this skill performs direct filesystem edits, the following safety measures
 
 ## Compliance Checklist
 
-Two parts: deterministic checks are obtained from `tools/`, the rest are AI/skill-reserved judgments.
+Two parts: deterministic checks are obtained from `.council/tools/`, the rest are AI/skill-reserved judgments.
 
 **Deterministic — obtained by running the tools, not by hand:**
 
-- [ ] `python3 tools/check_all.py` reports no `high` findings; every `medium`/`low` finding is either explained or fixed (covers line count ≤ 200 per §7.3, changelog existence and format, cross-reference anchors, manifest parity, naming, schema)
-- [ ] Manifest reflects current on-disk state via `python3 tools/gen_manifest.py --check` (regenerate-and-diff; no hand edits)
-- [ ] Version bumped correctly per `documentation-rules` §7.5 and changelog entry written — both via `tools/bump_version.py` (type of bump matches change type; `--note` non-empty)
+- [ ] `python3 .council/tools/check_all.py --root . --core-root .council` reports no `high` findings; every `medium`/`low` finding is either explained or fixed (covers line count ≤ 200 per §7.3, changelog existence and format, cross-reference anchors, manifest parity, naming, schema)
+- [ ] Manifest reflects current on-disk state via `python3 .council/tools/gen_manifest.py --root . --check` (regenerate-and-diff; no hand edits)
+- [ ] Version bumped correctly per `documentation-rules` §7.5 and changelog entry written — both via `.council/tools/bump_version.py` (type of bump matches change type; `--note` non-empty)
 
 **Skill/AI-reserved — no tool substitutes for these:**
 
-- [ ] All domain terms exist in `docs/en/glossary/index.md` (or escalated) — audit rule 3
+- [ ] All domain terms exist in `.council/docs/en/glossary/index.md` (or escalated) — audit rule 3
 - [ ] Abstraction level appropriate and consistent across related docs (`documentation-rules` §7.4) — audit rule 5
 - [ ] Metadata header follows `documentation-rules` §7.2 conventions (no `Language` field, `Source:` present for RU)
 - [ ] Split decision (if size exceeded) escalated to the operator with 2–3 candidate points (§7.3)
 - [ ] Changelog `--note` reason string is operator-supplied or quoted verbatim from the approved plan
-- [ ] `classification` (`mechanical` | `semantic`) is advisory work-classification, aligned with shipped `tools/` behavior and OP-1 non-gating (§Change Classification, `AGENTS.md` §1.7); no write occurred without step-(5) `approve`
+- [ ] `classification` (`mechanical` | `semantic`) is advisory work-classification, aligned with shipped `.council/tools/` behavior and OP-1 non-gating (§Change Classification, `AGENTS.md` §1.7); no write occurred without step-(5) `approve`
 - [ ] Russian synchronization per `documentation-rules` §3.3 (ADR-012): drift audit report-only unless post-Approve `auto_sync` is in effect and no `no_auto_translation` opt-out exists
   - [ ] For explicit or `auto_sync` writes: line number parity verified; all four Phase 4 write-gates passed (fail==0, line parity, EN-identity scan, glossary compliance)
   - [ ] External engine used per ADR-014 contract (lock file read, `--contract-version` passed, exit code 0, report stored); provenance sidecar + `STATUS.md` regenerated after write
 
-Fix failures mechanically where a `tools/` script owns the fix; escalate if unfixable or if the fix requires semantic judgment.
+Fix failures mechanically where a `.council/tools/` script owns the fix; escalate if unfixable or if the fix requires semantic judgment.
 
 ---
 
 ## References
 
-- `docs/en/documentation-rules/index.md` (§2–§8, §5.1–§5.2, §3.3, §6, §7.1–§7.6) — normative documentation rules
+- `.council/docs/en/documentation-rules/index.md` (§2–§8, §5.1–§5.2, §3.3, §6, §7.1–§7.6) — normative documentation rules
 - `AGENTS.md` (§1.6, §1.7) — documentation/tooling separation guards
-- `docs/en/glossary/index.md` (canonical term definitions)
-- `docs/en/translation-project/index.md` + `contract.md` (external Translation Project consumer contract, ADR-014)
-- `fallback/index.md` (Council protocol; this skill is separate)
+- `.council/docs/en/glossary/index.md` (canonical term definitions)
+- `.council/docs/en/translation-project/index.md` + `contract.md` (external Translation Project consumer contract, ADR-014)
+- `.council/fallback/index.md` (Council protocol; this skill is separate)
 
 ---
 
 *Aligned with project documents v1.2.0-draft (Documenter reconstruction, staged work mode).*
+
+---
+
+## Host layout note (dist install)
+
+The Council framework is isolated under `.council/` (consensus
+`sess-dist-isolated-install-2026-11-22`): every `tools/`, framework
+`docs/en/<framework-id>/`, `.agents/skills/` and `defaults/` path in this
+file resolves under `.council/` (e.g. `.council/tools/check_all.py`,
+`.council/docs/en/documentation-rules/index.md`). Host-owned paths stay at
+the host root: your own `docs/en/<your-id>/` documents, the root
+`docs-manifest.yaml`, `CHANGELOGS/`, and `documenter/` translation
+provenance. Because the tools' default `--root` is the parent of their own
+location (`.council/`), always pass explicit roots for host work:
+`python3 .council/tools/check_all.py --root . --core-root .council` and
+`python3 .council/tools/gen_manifest.py --root . --write`.

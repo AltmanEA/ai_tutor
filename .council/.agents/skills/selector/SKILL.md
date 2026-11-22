@@ -60,7 +60,7 @@ Layer 1.  Activate Layer 2 behaviour:
   the markdown audit file is written only when `audit_dir` is provided
   (see Audit Artifact section).
 - **In-process adapter**: the call is dispatched through the in-process
-  adapter at `.agents/skills/selector/runtime/layer2_adapter.py`; no
+  adapter at `.council/skills/selector/runtime/layer2_adapter.py`; no
   subprocess or network calls are involved.
 
 **Important**: Layer 2 is the default.  If the caller does not send
@@ -232,15 +232,31 @@ Documents with `status: archive` or located under archived paths:
 
 - `docs/en/selector/index.md` — Selector specification (Layer 1 / Layer 2)
 - `docs-manifest.yaml` — authoritative document index
-- `fallback/index.md` — fallback-mode procedure and artifact conventions
-- `docs/en/glossary/index.md` — project terminology
-- `.agents/skills/selector/roles/selector_layer2.md` — Layer 2 role constraints
+- `.council/fallback/index.md` — fallback-mode procedure and artifact conventions
+- `.council/docs/en/glossary/index.md` — project terminology
+- `.council/skills/selector/roles/selector_layer2.md` — Layer 2 role constraints
 
 ## Internal Runtime Harness (deterministic Layer 1)
 
-An internal Python harness `.agents/skills/selector/runtime/selector_runtime.py`
+An internal Python harness `.council/skills/selector/runtime/selector_runtime.py`
 implements the deterministic part of Selector Layer 1 as a module, not an external
 tool type. It is invoked by the skill wrapper, never by the read-only role.
 Public functions: `sha256_file`, `load_manifest`, `sanitize_metadata`, `rank`,
 `run_query`, `validate_output`, `write_audit`. Used for automated V1/V2/V3/V4/V6/V8
 checks (injection defence, index-only, integrity, budget, fail-closed, audit).
+
+---
+
+## Host layout note (dist install)
+
+The Council framework is isolated under `.council/` (consensus
+`sess-dist-isolated-install-2026-11-22`): every `tools/`, framework
+`docs/en/<framework-id>/`, `.agents/skills/` and `defaults/` path in this
+file resolves under `.council/` (e.g. `.council/tools/check_all.py`,
+`.council/docs/en/documentation-rules/index.md`). Host-owned paths stay at
+the host root: your own `docs/en/<your-id>/` documents, the root
+`docs-manifest.yaml`, `CHANGELOGS/`, and `documenter/` translation
+provenance. Because the tools' default `--root` is the parent of their own
+location (`.council/`), always pass explicit roots for host work:
+`python3 .council/tools/check_all.py --root . --core-root .council` and
+`python3 .council/tools/gen_manifest.py --root . --write`.
