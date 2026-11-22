@@ -1,2 +1,3 @@
+<!-- CHANGES v0.3.0: Terminology alignment with the new project glossary: meaning→sense, question→segment, related→requires, Lab Assistant→Technician, This project/Learning project→Core Project/Learning Project; forgetting curve replaced by memory dynamics; §12 now references the glossary (operator-approved 2026-11-22; version and changelog hand-written pending tools/, operator decision) -->
 <!-- CHANGES v0.2.0: Replace installer stub with the ai_tutor project concept per Council session ai-tutor-concept-20261122 (conditionally resolved; RU deferred) -->
 <!-- CHANGES 0.1.0 (index.md): Initial stub installed by the Council dist installer. Replace the stub content with your project's concept and record real changes here. -->

@@ -1,6 +1,6 @@
 # ai_tutor Project Concept
 id: project-concept
-Version: 0.2.0
+Version: 0.3.0
 Status: draft
 Abstraction: conceptual
 changelog-path: CHANGELOGS/project-concept.changes.md
@@ -20,18 +20,18 @@ all programming; the target audience is students of IT specialties.
 
 Two projects are distinguished in the documentation:
 
-- **This project** — creation of the documentation set, skills for AI
-  agents, and supporting software (an MCP server).
-- **Learning project** — the project into which the results of this
-  project are installed and in which the learning materials and the
-  records of their mastery (progress data) live.
+- **Core Project (Core)** — creation of the documentation set, skills
+  for AI agents, and supporting software (an MCP server).
+- **Learning Project** — the project into which the results of the
+  Core Project are installed and in which the learning materials and
+  the records of their mastery (progress data) live.
 
 Disambiguation rule: if it is not obvious from the context which project
 is meant, the AI must clarify with the user; until the target project is
 established the agent performs no write to either project. This is a
 deliberate safety choice: a wrong guess has a destructive,
-cross-boundary direction. Deliverables flow one way — from this project
-into a learning project.
+cross-boundary direction. Deliverables flow one way — from the Core
+Project into a Learning Project.
 
 ## 3. Roles in the Learning Project
 
@@ -50,7 +50,7 @@ into a learning project.
   to deepen, what to omit). Produces: explanations, tests, assignments
   and progress updates delivered during study sessions. Its pacing and
   content decisions operate under the Professor's oversight.
-- **Lab Assistant** (software) — helps the Assistant and the Docent
+- **Technician** (software) — helps the Assistant and the Docent
   with well-algorithmizable tasks; example: context minimization during
   a step. Produces: computed results for the agents it serves.
 
@@ -60,15 +60,15 @@ tool calls.
 
 ## 4. Teaching Concept
 
-- A **meaning** is information containing elements and connections
+- A **sense** is information containing elements and connections
   between them, fitting into the working memory of a human brain.
-- A **concept** is a unit of knowledge uniting several meanings of one
+- A **concept** is a unit of knowledge uniting several senses of one
   entity, denoted in language by a **term**.
-- Cardinality: many meanings → one concept → one term. Materials are
+- Cardinality: many senses → one concept → one term. Materials are
   given to the Student in atoms that contain one thought each; concepts
-  are formed by gradually filling them with meanings.
+  are formed by gradually filling them with senses.
 - A definition gives only the main thought of the concept; the concept
-  is replenished with a meaning when the term is refined.
+  is replenished with a sense when the term is refined.
 - Before a term's definition is met, the term may be used in material
   text as an ordinary natural-language word — except where the everyday
   sense does not match the term's sense. That exception is a judgment
@@ -76,7 +76,7 @@ tool calls.
 
 ## 5. Learning Material Structure
 
-Hierarchy: **lecture (file) → topic → question → atom**. Materials
+Hierarchy: **lecture (file) → topic → segment → atom**. Materials
 comprise several lecture files.
 
 - An **atom** is the minimal unit of learning material: a definition,
@@ -93,30 +93,30 @@ comprise several lecture files.
   content or directives for the Docent to generate content during a
   study session.
 - A **topic** is a section beginning with a level-2 heading (`##`) and
-  containing several questions.
-- A **question** is a group of atoms inside a topic, beginning with a
+  containing several segments.
+- A **segment** is a group of atoms inside a topic, beginning with a
   level-3 heading (`###`), roughly one lecture slide in volume and
-  content. A question has no name of its own and is not a unit of
+  content. A segment has no name of its own and is not a unit of
   progress (progress stays per atom); its mastery is always computable
-  from its atoms. A question is one portion of new material at an
-  explanation step. Question titles are unique within a topic; a repeat
+  from its atoms. A segment is one portion of new material at an
+  explanation step. Segment titles are unique within a topic; a repeat
   is an error.
-- An atom inherits its topic and question from its position in the
-  file; a new topic heading resets the current question — a question
+- An atom inherits its topic and segment from its position in the
+  file; a new topic heading resets the current segment — a segment
   does not cross a topic boundary. Headings of level 4 and deeper are
   not supported.
 
 ## 6. Naming and Identity
 
 - Every atom has a name: a unique identifier within the whole course.
-  Atom names, term names and meaning names share one namespace, and
+  Atom names, term names and sense names share one namespace, and
   uniqueness is enforced across all three (the single namespace is the
   operator's decision; the author therefore tracks atom, term and
-  meaning names in one shared space).
+  sense names in one shared space).
 - Repeated names are errors — including an example/assignment name
   equal to a term.
 - For a definition, the name is its term; for an extension, a unique
-  meaning name (§7). For an example or assignment, the name is the
+  sense name (§7). For an example or assignment, the name is the
   first element of the marker parentheses.
 - Name comparison is exact, without morphology. A name is independent
   of file, topic and content: editing an atom or its surroundings never
@@ -134,13 +134,13 @@ unresolved.
 - A definition may declare links in the form `term (X: A, Y: B, C)`,
   where A, B, C are terms and X, Y are link types.
 - Position X: **refines** — a new term is introduced that adds to the
-  meaning of a concept; **extends** — the meaning is added without a
-  new term. Only one term follows X. With `extends`, every meaning
-  carries a unique meaning name; redefining the term is forbidden.
-- Position Y: **related** — understanding the current definition
+  sense of a concept; **extends** — the sense is added without a new
+  term. Only one term follows X. With `extends`, every sense carries a
+  unique sense name; redefining the term is forbidden.
+- Position Y: **requires** — understanding the current definition
   requires understanding the linked terms. A term may be linked to
   several terms, including ones not yet defined in the course.
-- Links are one-directional: if D refines, extends or is related to E,
+- Links are one-directional: if D refines, extends or requires E,
   none of this holds in the reverse direction.
 - For atoms other than definitions, the link is the second element of
   the marker parentheses: `Example (fn-simple; function):`. The link
@@ -152,14 +152,15 @@ curriculum, and a link from an atom to itself, are errors.
 
 ## 8. Learning Progress
 
-Progress is the fixation of the mastery level of meanings for each
-student. Per meaning it accounts for: exposure to its atom, exposure to
-related atoms, answers to test questions and solutions of practical
-tasks that require the meaning; forgetting is additionally accounted
-for by a forgetting curve (parameters and time base deferred, OQ-6).
+Progress is the fixation of the mastery level of senses for each
+student. Per sense it accounts for: exposure to its atom, exposure to
+linked atoms, answers to test questions and solutions of practical
+tasks that require the sense; forgetting is additionally accounted
+for by memory dynamics (model parameters and time base deferred,
+OQ-6).
 
 Progress is used to: evaluate atoms to be offered next for study or
-repetition; formulate explanations using only meanings familiar to the
+repetition; formulate explanations using only senses familiar to the
 Student; assign attestation grades.
 
 Concept-level invariants: progress is recorded as evidence per step — a
@@ -175,17 +176,17 @@ only within the scope of the student they belong to.
   period of time; a lesson consists of several steps.
 - A **step** is the minimal unit of the learning process, corresponding
   to one Docent session. At the start of a step the Docent announces
-  the new step to the Lab Assistant; all progress events until the next
+  the new step to the Technician; all progress events until the next
   announcement belong to one step and are counted once.
 - At the start of a step the Docent determines the next material from
   the learning materials, the Student's progress and the Student's
-  wishes: for new material a whole question (a portion ≈ one slide);
+  wishes: for new material a whole segment (a portion ≈ one slide);
   for repetition and point requests individual atoms; or the need for a
   knowledge check (a test or a practical task).
 - After choosing the step type the Docent loads the matching skill
   (explanation — `docent-explain`; control — to be described later).
   At the end of the step the Docent updates the learning progress and
-  uses the Lab Assistant to minimize context.
+  uses the Technician to minimize context.
 
 ## 10. Deferred Scope
 
@@ -212,13 +213,13 @@ expected to work with validation-feedback tooling (deferred, §10).
   interact when they disagree; what canonical form of names is used?
 - OQ-2 Link type of example/assignment links: an implicit default or
   separately stored?
-- OQ-3 Is a meaning name unique per concept or across the course?
+- OQ-3 Is a sense name unique per concept or across the course?
 - OQ-4 Rename/retire lifecycle of names and its effect on links and
   progress.
 - OQ-5 Cross-course identity: per-course namespace for a student taking
   several courses.
-- OQ-6 Forgetting-curve time base (wall-clock vs study time); does it
-  drive automatic re-presentation?
+- OQ-6 Memory-dynamics model: time base (wall-clock vs study time);
+  does it drive automatic re-presentation?
 - OQ-7 Policy for cyclic links.
 - OQ-8 Boundary of the Docent's authority to adjust the program.
 - OQ-9 Version compatibility of installed artifacts; rule precedence
@@ -228,8 +229,6 @@ expected to work with validation-feedback tooling (deferred, §10).
 
 ## 12. Glossary Note
 
-Domain terms used here (atom, definition, example, assignment, topic,
-question, lecture, meaning, concept, term, link, progress, lesson,
-step, Professor, Assistant, Docent, Lab Assistant) will enter the
-project glossary in a dedicated session; the glossary does not yet
-exist.
+Domain terms used here are defined in the project glossary
+(`docs/en/glossary/index.md`); the glossary is authoritative for term
+forms in both languages.

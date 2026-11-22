@@ -18,3 +18,13 @@ documents:
     status: draft
     abstraction: conceptual
     changelog-path: CHANGELOGS/project-concept.changes.md
+
+  # glossary entry hand-written pending tools/gen_manifest.py (operator decision 2026-11-22)
+  - id: glossary
+    path: docs/en/glossary/index.md
+    title: Glossary
+    version: 0.1.0
+    status: draft
+    abstraction: conceptual
+    changelog-path: CHANGELOGS/glossary.changes.md
+    has_translation: docs/ru/glossary/index-RU.md
