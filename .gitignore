@@ -1,0 +1,6 @@
+
+# Council framework (managed block)
+.council/backup-*/
+.council/**/__pycache__/
+.council/telemetry/**/*.jsonl
+**/techdoc-translator/.env

@@ -1,0 +1,90 @@
+# Documentation Manifest
+# Single source of truth for project documentation layout.
+#
+# Language layout: English originals under docs/en/, Russian translations under docs/ru/.
+# Translations use mirrored directory structure (same nesting as English).
+# has_translation field uses relative path from manifest location to the RU file.
+# Schema change v0.2: has_translation changed from bare filename to relative path
+# to support separated language directories (ru-restructure consensus, 2026-11-10).
+# Schema change v0.3: entries carry changelog-path when the frontmatter
+# declares it (fix plan sess-documenter-fixes, 2026-11-14, decision A).
+
+# GENERATED — DO NOT EDIT (sole writer: tools/gen_manifest.py; see documentation-rules §2.2)
+documents:
+  - id: archive
+    path: docs/en/archive/index.md
+    title: Archive
+    version: 0.1.0
+    status: archive
+    abstraction: reference
+    changelog-path: CHANGELOGS/documenter-service.changes.md
+    allow_non_index_paths: true
+
+  - id: documentation-rules
+    path: docs/en/documentation-rules/index.md
+    title: Documentation Rules
+    version: 0.5.0
+    status: active
+    abstraction: protocol
+    changelog-path: CHANGELOGS/documentation-rules.changes.md
+
+  - id: documenter-service
+    path: docs/en/documenter-service/index.md
+    title: Documenter
+    version: 1.5.0
+    status: active
+    abstraction: conceptual
+    changelog-path: CHANGELOGS/documenter-service.changes.md
+    allow_non_index_paths: true
+
+  - id: documenter-service-impl-guide
+    path: docs/en/documenter-service/impl-guide.md
+    title: Documenter Implementation Guide
+    version: 0.6.0
+    status: active
+    abstraction: reference
+    changelog-path: CHANGELOGS/documenter-service-impl-guide.changes.md
+    references:
+      - documenter-service
+      - documentation-rules
+    allow_non_index_paths: true
+
+  - id: glossary
+    path: docs/en/glossary/index.md
+    title: Glossary
+    version: 0.20.0
+    status: active
+    abstraction: reference
+    changelog-path: CHANGELOGS/glossary.changes.md
+
+  - id: protocol-core
+    path: docs/en/protocol-core/index.md
+    title: Protocol Core
+    version: 0.6.0
+    status: active
+    abstraction: protocol
+    changelog-path: CHANGELOGS/protocol-core.changes.md
+
+  - id: translation-project
+    path: docs/en/translation-project/index.md
+    title: Translation Project — Consumer Contract
+    version: 0.1.0
+    status: draft
+    abstraction: protocol
+    changelog-path: CHANGELOGS/translation-project.changes.md
+    references:
+      - planned-architecture-decisions
+      - glossary
+
+  - id: translation-project-contract
+    path: docs/en/translation-project/contract.md
+    title: Translation Project — CLI Contract Specification
+    version: 0.1.0
+    status: draft
+    abstraction: format
+    changelog-path: CHANGELOGS/translation-project.changes.md
+    references:
+      - planned-architecture-decisions
+      - glossary
+      - translation-project
+    allow_non_index_paths: true

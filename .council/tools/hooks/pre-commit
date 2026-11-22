@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+# tools/hooks/pre-commit — versioned documentation pre-commit hook.
+# Stage B, plan sess-doc-reliability-algo. Installed via
+# `git config core.hooksPath tools/hooks` (see tools/install-hooks.sh);
+# never copied into the repository's private hooks directory.
+#
+# SOAK MODE: warn-only until the operator flips to block mode by creating
+# the marker file tools/hooks/block-mode.flag. Warn mode ALWAYS exits 0;
+# block mode exits 1 only on high-severity findings or validator failure.
+# In BOTH modes all findings are printed — no silent failure.
+#
+# check_all exit-code contract (per its spec):
+#   0 = clean (silent when clean),
+#   1 = findings reported, none high-severity,
+#   2 = at least one high-severity reported (critical) — OR —
+#       internal error (crash, unreadable corpus), bad --rule token
+#       (distinguished on output).
+#
+# TOKEN CONTRACT with tools/check_all.py (reconciliation point for the
+# check_all author — the human-readable findings lines MUST comply):
+#   On findings, check_all prints one header line per severity tier
+#   present:
+#     🚨 critical: N       (when ≥1 high-severity finding reported)
+#     ⚠ findings: M        (M = total reported)
+#   Then one hint line per finding carrying the stable token contract:
+#     rule=<rule-name> severity=<low|medium|high|warning> file=<path> <desc>
+#   The block-mode high filter greps for `severity=high` in the hint lines.
+#   Clean output is silently empty (no "OK" line).
+#
+# Exit-code contract of THIS hook (MODE × check_all outcome):
+#   check_all absent / python3 absent / crash / non-contract exit code:
+#       warn-mode → exit 0 (loud)      block-mode → exit 1 (fail-closed)
+#   check_all exit 0 (clean, silent):   both modes → exit 0
+#   check_all exit 1 (findings, no high):
+#       warn-mode → exit 0 (printed)   block-mode → exit 0 too
+#       (belt-and-braces: grep severity=high in output, block if found)
+#   check_all exit 2:
+#       If output contains `🚨 critical` → critical findings:
+#           warn-mode → exit 0 (soak, prints output)
+#           block-mode → exit 1 (block)
+#       If output contains `check_all: INTERNAL ERROR` → crash:
+#           warn-mode → exit 0 (loud)  block-mode → exit 1 (fail-closed)
+#       If neither marker present → non-contract crash:
+#           warn-mode → exit 0 (loud)  block-mode → exit 1 (fail-closed)
+set -u
+
+MODE=warn
+HOOK_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+if [ -f "${HOOK_DIR}/block-mode.flag" ]; then
+  MODE=block
+fi
+
+if [ "$MODE" = block ]; then
+  echo "[pre-commit] documentation check: BLOCK"
+else
+  echo "[pre-commit] documentation check: WARN-ONLY (soak)"
+fi
+
+# Destination exit code for fail-closed outcomes (validator missing/crashed):
+# 0 while soaking, 1 once the operator has flipped the marker.
+fail_closed_exit() {
+  if [ "$MODE" = block ]; then
+    exit 1
+  fi
+  exit 0
+}
+
+# Resolve checker location: first try relative to this hook file, then
+# fall back to <repo-root>/tools/check_all.py (backward compat for
+# Council's own repo where hooks live under tools/hooks/).
+CHECKER=""
+REL_CHECKER="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/../check_all.py"
+if [ -f "$REL_CHECKER" ]; then
+  CHECKER="$REL_CHECKER"
+else
+  # Fallback: try the standard tools/ path under the git root.
+  ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || ROOT=""
+  if [ -n "$ROOT" ] && [ -f "$ROOT/tools/check_all.py" ]; then
+    CHECKER="$ROOT/tools/check_all.py"
+  fi
+fi
+
+if [ -z "$CHECKER" ]; then
+  echo "[pre-commit] !!! CHECK_ALL NOT RUN — validator not found near the hook ($REL_CHECKER) or under $ROOT/tools/check_all.py" >&2
+  echo "[pre-commit] !!! remediation: ensure check_all.py exists adjacent to the hooks directory or at <repo>/tools/check_all.py" >&2
+  fail_closed_exit
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "[pre-commit] !!! CHECK_ALL NOT RUN — python3 missing from PATH" >&2
+  echo "[pre-commit] !!! remediation: install python3 (3.11+) and re-run; no documentation check was performed" >&2
+  fail_closed_exit
+fi
+
+cd -- "$(dirname "$CHECKER")/.." || exit 1
+
+# Compute --root from the resolved checker's parent tools/ dir → one level up.
+RESOLVED_ROOT="$(pwd)"
+
+OUTPUT="$(python3 "$CHECKER" --root "$RESOLVED_ROOT" 2>&1)"
+RC=$?
+
+if [ -n "$OUTPUT" ]; then
+  printf '%s\n' "$OUTPUT"
+fi
+
+case "$RC" in
+  0)
+    # Clean: checker ran cleanly (may be silent output). Both modes pass.
+    exit 0
+    ;;
+  1)
+    # Findings present, none high by definition. Full output printed
+    # verbatim above; each line names rule and file per the token contract.
+    if [ "$MODE" = warn ]; then
+      echo "[pre-commit] WARN-ONLY (soak): findings above do not block this commit."
+      exit 0
+    fi
+    # Block mode: belt-and-braces grep for severity=high in output;
+    # if it appears (non-contract code), block.
+    if printf '%s\n' "$OUTPUT" | grep -q 'severity=high'; then
+      echo "[pre-commit] BLOCKED: high-severity documentation findings (rule + file named in lines above)." >&2
+      echo "[pre-commit] remediation: fix the documents listed, then commit again; last resort 'git commit --no-verify'." >&2
+      exit 1
+    fi
+    echo "[pre-commit] medium/low findings only — not blocking (printed above; fix when convenient)."
+    exit 0
+    ;;
+  2)
+    # Exit 2: could be critical findings (critical marker) or internal
+    # error/crash (check_all: INTERNAL ERROR) or non-contract output.
+    if printf '%s\n' "$OUTPUT" | grep -q '🚨 critical'; then
+      # Critical findings path: differentiate from crash (warn 0 / block 1).
+      if [ "$MODE" = warn ]; then
+        echo "[pre-commit] WARN-ONLY (soak): critical findings above."
+        exit 0
+      fi
+      echo "[pre-commit] BLOCKED: critical (high-severity) documentation findings — remediation: fix the documents listed, then commit again; last resort 'git commit --no-verify'." >&2
+      exit 1
+    elif printf '%s\n' "$OUTPUT" | grep -q 'check_all: INTERNAL ERROR'; then
+      # Internal error / crash path: fail-closed as today (warn 0 / block 1).
+      echo "[pre-commit] CHECK_ALL INTERNAL ERROR — remediation: run python3 tools/check_all.py and report the traceback; do not debug the hook itself" >&2
+      fail_closed_exit
+    else
+      # Non-contract output / crash: fail-closed (warn 0 / block 1).
+      echo "[pre-commit] CHECK_ALL INTERNAL ERROR (unexpected output) — remediation: run python3 tools/check_all.py and report the traceback; do not debug the hook itself" >&2
+      fail_closed_exit
+    fi
+    ;;
+  *)
+    # Non-contract exit code: treat as validator failure, fail loud.
+    echo "[pre-commit] CHECK_ALL INTERNAL ERROR (unexpected exit code ${RC}) — remediation: run python3 tools/check_all.py and report the traceback; do not debug the hook itself" >&2
+    fail_closed_exit
+    ;;
+esac

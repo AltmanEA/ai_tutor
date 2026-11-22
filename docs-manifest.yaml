@@ -1,0 +1,20 @@
+# Documentation Manifest
+# Single source of truth for project documentation layout.
+#
+# Language layout: English originals under docs/en/, Russian translations under docs/ru/.
+# Translations use mirrored directory structure (same nesting as English).
+# has_translation field uses relative path from manifest location to the RU file.
+# Schema change v0.2: has_translation changed from bare filename to relative path
+# to support separated language directories (ru-restructure consensus, 2026-11-10).
+# Schema change v0.3: entries carry changelog-path when the frontmatter
+# declares it (fix plan sess-documenter-fixes, 2026-11-14, decision A).
+
+# GENERATED — DO NOT EDIT (sole writer: tools/gen_manifest.py; see documentation-rules §2.2)
+documents:
+  - id: project-concept
+    path: docs/en/project-concept/index.md
+    title: ai_tutor
+    version: 0.1.0
+    status: draft
+    abstraction: conceptual
+    changelog-path: CHANGELOGS/project-concept.changes.md
