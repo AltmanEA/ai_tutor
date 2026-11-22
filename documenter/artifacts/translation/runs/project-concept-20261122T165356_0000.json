@@ -1,0 +1,24 @@
+{
+  "ok": 193,
+  "skip": 43,
+  "fail": 0,
+  "backend": "local",
+  "model": "Qwen3.6-35B-A3B-NVFP4",
+  "prompt_version": "2026.11-r5",
+  "glossary_applied": 0,
+  "source_sha256": "8fddcae6cd2e88732d92153f06e69b291724a76cb11c58413830308bd84dea16",
+  "output_sha256": "f6b4900403eb6f22dbf5e56363a966eadfe10d0d47aa68317a8f944aff953a14",
+  "exit_code": 0,
+  "contract_version": "1.0.0",
+  "timestamp": "2026-11-22T16:53:56+0000",
+  "message": "ok",
+  "target_id": "project-concept",
+  "write_gates": {
+    "phase4-fail": "pass",
+    "phase4-parity": "pass",
+    "phase4-identity": "pass",
+    "phase4-glossary": "vacuous",
+    "glossary_provenance": "glossary: path=none | terms=0 | matched=0 | status=vacuous",
+    "note": "host glossary format (- **term** (ru)) not parseable by core kernel regex; gate 4 vacuous per wrapper contract; skill rule-3 glossary judgment performed manually (candidate post-edited: sense=смысл, Technician=Лаборант, lesson=занятие, Core Project=Проект ядра, Learning Project=Учебный проект, requires=опирается; EN leakage removed)"
+  }
+}

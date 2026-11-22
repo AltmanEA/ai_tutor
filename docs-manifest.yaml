@@ -23,7 +23,8 @@ documents:
   - id: project-concept
     path: docs/en/project-concept/index.md
     title: ai_tutor Project Concept
-    version: 0.3.0
+    version: 0.4.0
     status: draft
     abstraction: conceptual
+    has_translation: docs/ru/project-concept/index-RU.md
     changelog-path: CHANGELOGS/project-concept.changes.md

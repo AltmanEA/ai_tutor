@@ -1,9 +1,10 @@
 # ai_tutor Project Concept
 id: project-concept
-Version: 0.3.0
+Version: 0.4.0
 Status: draft
 Abstraction: conceptual
 changelog-path: CHANGELOGS/project-concept.changes.md
+has_translation: docs/ru/project-concept/index-RU.md
 
 The concept of the ai_tutor project: AI-based means of automating the
 learning process. Council sessions read this document as the anchor for
