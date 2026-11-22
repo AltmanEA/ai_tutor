@@ -1,5 +1,6 @@
 
 # Council framework (managed block)
+sessions
 .council/backup-*/
 .council/**/__pycache__/
 .council/telemetry/**/*.jsonl
