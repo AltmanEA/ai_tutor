@@ -1,7 +1,7 @@
 # Translation Project — CLI Contract Specification
 
 id: translation-project-contract
-Version: 0.1.0
+Version: 0.3.0
 Status: draft
 Abstraction: format
 changelog-path: CHANGELOGS/translation-project.changes.md
@@ -99,6 +99,8 @@ The `--glossary` argument expects a generic markdown glossary file. Each entry u
 
 The parser extracts the English and Russian pairs; no Council-specific metadata is required. Unknown terms in the source that have no glossary entry are translated without glossary mapping.
 
+**Grammar binding.** The round-bracket group is the Russian equivalent ONLY: `enforce_glossary` force-substitutes its full contents verbatim when the model leaves an EN term untranslated. Annotations (category, role notes, synonyms such as `; человек`, `; связь «опора»`, `; Ядро / Core`) must sit after the closing parenthesis — inside the parentheses they leak raw into RU output. Entries without a parenthesized equivalent parse with `ru=None` and are silently skipped. Consumers can validate the format deterministically: `tools/check_drift.py --validate-glossary <path>` (Council-side pre-flight, exit 1 on violation).
+
 ---
 
 ## Lock File Schema
@@ -142,7 +144,8 @@ Derived from the run report with additional Council metadata:
 | `ok` | int | Successful lines |
 | `skip` | int | Skipped lines |
 | `fail` | int | Failed lines |
-| `glossary_applied` | int | Glossary terms applied |
+| `glossary_applied` | int | Glossary terms applied (diagnostic only: known engine defect reports 0 even when terms were applied; authoritative term counts are the gate-4 provenance line `terms`/`matched`) |
+| `ai_review` | string | Gate-5 AI quality review verdict: `passed` / `failed` / `not_run` (the Documentation Worker skill's mandatory AI quality review gate; `verified` status requires `passed`) |
 | `source_sha256` | string | SHA-256 of EN source |
 | `output_sha256` | string | SHA-256 of RU output |
 | `target_id` | string | Council document ID |

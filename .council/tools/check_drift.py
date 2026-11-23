@@ -33,7 +33,54 @@ DETERMINISTIC_RULES = {
     "hr-pos": ("high", "hr position mismatch"),
     "metadata-fingerprint": ("high", "metadata line mismatch"),
     "en-leakage": ("medium", "Cyrillic absence in RU body text"),
+    "glossary-format": ("medium", "glossary entry violates contract grammar"),
 }
+
+# T-1: Latin content in RU body lines that is NOT untranslated English.
+# Identifier tails (tracing-ID line continuations such as 'OQ-6).') and short
+# all-caps markers ('OQ', 'EN', 'RU', 'AI', 'TBD') are references/markers, not
+# prose.  Real leakage words are alphabetic runs of >=3 letters remaining after
+# identifier-shaped spans are removed ('TODO', 'Section', 'Overview').
+_IDENTIFIER_SPAN_RE = re.compile(
+    r'\b(?:[A-Za-z]{1,10}-\d+[.)\]]*'              # ID tails: OQ-6).  ADR-014  F-3)
+    r'|[A-Za-z]+\.\d+[\w.]*'                        # versions: v0.1.0
+    r'|[A-Za-z][\w-]*\.(?:md|py|sh|json|ya?ml|txt|html?)\b'  # file.ext (check_drift.py)
+    r'|\b[A-Z]{1,2}\b'                             # short all-caps markers: OQ EN RU
+    r')'
+)
+
+
+def _latin_is_prose(s):
+    """True if the line's Latin content looks like untranslated English prose.
+
+    Identifier-shaped spans (ID-numbered references, file names, 1-2 letter
+    all-caps markers) are stripped first; a run of >=3 letters that survives is
+    treated as leakage prose (TODO, Section, Overview).
+    """
+    stripped = _IDENTIFIER_SPAN_RE.sub(' ', s)
+    return bool(re.search(r'[A-Za-z]{3,}', stripped))
+
+# Glossary entry lines may be bare (``**Term** (рус.)``) or markdown list
+# items (``- **Term** (рус.)``); an optional list marker (+/*/-) is accepted.
+# Host glossaries commonly use bulleted lists; the old '^\\*\\*' anchor
+# parsed 0 terms from them, making gate 4 vacuous-by-error.  Same contract
+# as the engine's load_glossary (vendor/techdoc-translator, list-format fix).
+GLOSSARY_ENTRY_RE = re.compile(r'^(?:[-*+]\s+)?\*\*([^*]+)\*\*\s*\(([^)]+)\)')
+
+
+def parse_glossary_terms(glossary_path):
+    """Parse ``**term** (рус. эквивалент)`` entries from a glossary file.
+
+    Entries may be bare lines or markdown list items ('- ', '* ', '+ ').
+    Returns dict {term: ru_equivalent}.  Caller validates file existence.
+    """
+    terms = {}
+    with open(glossary_path, "r", encoding="utf-8") as f:
+        for line in f:
+            m = GLOSSARY_ENTRY_RE.match(line.strip())
+            if m:
+                terms[m.group(1).strip()] = m.group(2).strip()
+    return terms
 
 
 def _add(finding_list, rule, file, description):
@@ -305,7 +352,7 @@ def _check_en_leakage(ru_lines, known_keys, findings, ru_file):
         if not has_cyrillic.search(s):
             # Check: line might contain only inline-code, URL, numbers
             # If it has any Latin text that isn't inline-code/URL/number → finding
-            has_text = bool(re.search(r'[A-Za-z]{2,}', s))
+            has_text = bool(re.search(r'[A-Za-z]{2,}', s)) and _latin_is_prose(s)
             has_inline_code = '`' in s
             has_url = bool(re.search(r'https?://', s))
             if has_text and not has_inline_code and not has_url:
@@ -418,6 +465,23 @@ def _check_phase4_identity(en_lines, ru_lines, known_keys, ru_file):
     return findings
 
 
+def _ru_equiv_stems(ru_equiv):
+    """Stems to require in the RU body for a glossary entry's equivalent.
+
+    Only the translation segment is checked: a '; ...' tail is a gloss
+    (category / link-name / note such as '; human', '; AI agent',
+    '; связь «опора»'), not a word the translation must contain.  Tokens
+    are reduced to their letters (guillemets, parentheses, punctuation
+    stripped) before stemming, so an attached '«' does not poison the stem.
+    """
+    translation = ru_equiv.split(';')[0]
+    stems = []
+    for tok in re.findall(r'\w+', translation, re.UNICODE):
+        stem = tok.lower()[:min(4, max(1, len(tok) - 1))]
+        stems.append(stem)
+    return stems
+
+
 def _check_phase4_glossary(en_lines, ru_lines, known_keys,
                            glossary_path, ru_file):
     """Gate: phase4-glossary — EN-body terms must have RU equivalents (stem-prefix).
@@ -427,12 +491,7 @@ def _check_phase4_glossary(en_lines, ru_lines, known_keys,
     """
     findings = []
 
-    glossary_re = re.compile(r'^\*\*([^*]+)\*\*\s*\(([^)]+)\)')
-    terms = {}
-    with open(glossary_path, "r", encoding="utf-8") as f:
-        for line in f:
-            m = glossary_re.match(line.strip())
-            if m: terms[m.group(1).strip()] = m.group(2).strip()
+    terms = parse_glossary_terms(glossary_path)
 
     en_body_idx = _collect_body_lines(en_lines, known_keys)
     ru_body_idx = _collect_body_lines(ru_lines, known_keys)
@@ -446,8 +505,7 @@ def _check_phase4_glossary(en_lines, ru_lines, known_keys,
         if not word_re.search(en_body_text):
             continue
         all_match = True
-        for ru_word in ru_equiv.split():
-            stem = ru_word.lower()[:min(4, len(ru_word) - 1)]
+        for stem in _ru_equiv_stems(ru_equiv):
             if not re.search(r'\b' + re.escape(stem), ru_body_text):
                 all_match = False
                 break
@@ -458,6 +516,75 @@ def _check_phase4_glossary(en_lines, ru_lines, known_keys,
         _add(findings, "phase4-glossary", ru_file,
              f"glossary terms untranslated: {', '.join(missing[:5])}")
     return findings
+
+
+# ── Glossary format validation (documentation-rules §4.1) ─────────────────
+# Contract grammar (translation-project contract.md §Glossary Input Format):
+#   **English term** (Russian equivalent) — description
+# The parenthesized group is the Russian equivalent ONLY: the engine's
+# enforce_glossary substitutes its full contents verbatim into RU output, so
+# ';'-annotations, '—' glosses, '/' synonyms or «guillemets» INSIDE the
+# parentheses leak raw into translations.  Entries without a parenthesized
+# equivalent parse ru=None and are silently skipped by the engine.
+
+_ANNOTATION_HINT_RE = re.compile(r'[;—/]')
+_GLOSS_PAREN_RE = re.compile(
+    r'^(?:[-*+]\s+)?\*\*([^*]+)\*\*\s*(?:(\([^)]*\))|([^\s(][^\n]*))?')
+
+
+def validate_glossary(glossary_path):
+    """Deterministic glossary format check. Returns (findings, provenance).
+
+    findings: list of finding dicts (rule=glossary-format), malformed entries.
+    provenance: dict with path/terms/malformed/skipped counts.
+
+    A bolded line counts as an entry when followed by a parenthesized group
+    or by a capitalized/annotated remainder; lowercase remainder is prose
+    (e.g. intro sentences like '**Term** are protocol concepts…').
+    """
+    findings = []
+    terms = 0
+    malformed = 0
+    skipped = 0
+    with open(glossary_path, "r", encoding="utf-8") as fh:
+        for lineno, line in enumerate(fh, 1):
+            s = line.strip()
+            m = _GLOSS_PAREN_RE.match(s)
+            if not m:
+                continue
+            en_term = m.group(1).strip()
+            paren = m.group(2)
+            tail = m.group(3)
+            if paren is None and tail is not None:
+                rest = tail.strip()
+                if rest and rest[0].islower():
+                    continue  # prose sentence with a bolded lead-in
+            terms += 1
+            if paren is not None:
+                content = paren[1:-1].strip()
+                problems = []
+                if not content:
+                    problems.append("empty Russian equivalent")
+                else:
+                    if _ANNOTATION_HINT_RE.search(content):
+                        problems.append(
+                            "annotation inside parentheses (engine force-"
+                            "apply substitutes it verbatim)")
+                    if not re.search(r'[\u0400-\u04FF\u0500-\u052F]',
+                                     content.split(';')[0]):
+                        problems.append("Russian equivalent has no Cyrillic")
+                if problems:
+                    malformed += 1
+                    _add(findings, "glossary-format", glossary_path,
+                         f"line {lineno}: entry '{en_term}': "
+                         + "; ".join(problems))
+            else:
+                # entry without (...) equivalent: engine parses ru=None
+                # and skips it silently — provenance-only signal.
+                skipped += 1
+    provenance = {"path": os.path.realpath(glossary_path),
+                  "terms": terms, "malformed": malformed, "skipped": skipped}
+    return findings, provenance
 
 
 def check_drift(en_path, ru_path, known_keys, json_output=False):
@@ -607,14 +734,8 @@ def _run_phase4(en_path, ru_path, report_path, glossary_path, json_output):
         en_body_idx = _collect_body_lines(en_lines, KNOWN_KEYS)
         en_body_text = " ".join(_ic(en_lines[i].strip()) for i in en_body_idx).lower()
 
-        # Parse glossary terms (same regex as _check_phase4_glossary)
-        glossary_re = re.compile(r'^\*\*([^*]+)\*\*\s*\(([^)]+)\)')
-        terms = {}
-        with open(glossary_path, "r", encoding="utf-8") as f:
-            for line in f:
-                m = glossary_re.match(line.strip())
-                if m:
-                    terms[m.group(1).strip()] = m.group(2).strip()
+        # Parse glossary terms (shared parser, list-format tolerant)
+        terms = parse_glossary_terms(glossary_path)
         provenance_path = os.path.realpath(glossary_path)
         provenance_terms = len(terms)
         for term in terms:
@@ -646,6 +767,37 @@ def _print_provenance(path, terms, matched, status, json_output):
 
 def main():
     args = sys.argv[1:]
+
+    if args and args[0] == "--validate-glossary":
+        # Glossary format validation mode
+        args = args[1:]
+        vg_json = "--json" in args
+        if vg_json:
+            args.remove("--json")
+        if len(args) != 1:
+            print("Usage: check_drift.py --validate-glossary <glossary.md> "
+                  "[--json]", file=sys.stderr)
+            sys.exit(2)
+        path = args[0]
+        if not os.path.isfile(path):
+            print(f"ERROR: glossary file not found: {path}", file=sys.stderr)
+            sys.exit(2)
+        findings, prov = validate_glossary(path)
+        if vg_json:
+            for f in findings:
+                print(json.dumps(f, ensure_ascii=False))
+            print(json.dumps({"rule": "glossary-format-provenance",
+                              "severity": "low", "file": prov["path"],
+                              "description": "terms={terms}, malformed={malformed}, "
+                                             "skipped={skipped}".format(**prov)},
+                             ensure_ascii=False), file=sys.stderr)
+        else:
+            for f in findings:
+                print(f"rule={f['rule']} severity={f['severity']} "
+                      f"file={f['file']} {f['description']}")
+            print(f"glossary: path={prov['path']} | terms={prov['terms']} | "
+                  f"malformed={prov['malformed']} | skipped={prov['skipped']}")
+        sys.exit(1 if findings else 0)
 
     if args and args[0] == "--phase4":
         # Phase 4 mode
@@ -691,14 +843,8 @@ def main():
                 print(f"ERROR: glossary file not found: {glossary_path}", file=sys.stderr)
                 sys.exit(2)
             try:
-                # Validate readable + parse terms
-                glossary_re = re.compile(r'^\*\*([^*]+)\*\*\s*\(([^)]+)\)')
-                terms = {}
-                with open(glossary_path, "r", encoding="utf-8") as f:
-                    for line in f:
-                        m = glossary_re.match(line.strip())
-                        if m:
-                            terms[m.group(1).strip()] = m.group(2).strip()
+                # Validate readable + parse terms (shared parser)
+                terms = parse_glossary_terms(glossary_path)
 
             except OSError:
                 print(f"ERROR: cannot read glossary file: {glossary_path}", file=sys.stderr)

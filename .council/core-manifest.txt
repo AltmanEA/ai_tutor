@@ -9,6 +9,10 @@
 .council/vendor/techdoc-translator/LICENSE
 .council/vendor/techdoc-translator/docs/INTEGRATION.md
 .council/vendor/techdoc-translator/README.md
+.council/vendor/techdoc-translator/.pytest_cache/CACHEDIR.TAG
+.council/vendor/techdoc-translator/.pytest_cache/.gitignore
+.council/vendor/techdoc-translator/.pytest_cache/v/cache/nodeids
+.council/vendor/techdoc-translator/.pytest_cache/README.md
 .council/vendor/techdoc-translator/tests/test_unit.py
 .council/vendor/techdoc-translator/tests/smoke.sh
 .council/vendor/techdoc-translator/MANIFEST.txt
@@ -72,6 +76,7 @@
 .council/tools/docmeta.py
 .council/tools/tests_helpers.py
 .council/tools/check_drift.py
+.council/tools/record_vendor_patch.py
 .council/tools/install-hooks.sh
 .council/tools/sync_translator.sh
 .council/tools/hooks/pre-commit
@@ -97,5 +102,6 @@
 .council/tools/tests/fixtures/check_drift/phase4/en_flexion.md
 .council/tools/tests/fixtures/check_drift/phase4/ru_good.md
 .council/tools/tests/fixtures/check_drift/phase4/ru_partially_translated.md
+.council/tools/tests/fixtures/check_drift/phase4/bullet-glossary.md
 .council/tools/tests/fixtures/check_drift/phase4/en.md
 .council/tools/gen_manifest.py
