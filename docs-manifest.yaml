@@ -14,7 +14,7 @@ documents:
   - id: glossary
     path: docs/en/glossary/index.md
     title: Glossary
-    version: 0.1.0
+    version: 0.2.0
     status: draft
     abstraction: conceptual
     has_translation: docs/ru/glossary/index-RU.md

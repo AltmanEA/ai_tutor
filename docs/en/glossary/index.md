@@ -1,6 +1,6 @@
 # Glossary
 id: glossary
-Version: 0.1.0
+Version: 0.2.0
 Status: draft
 Abstraction: conceptual
 changelog-path: CHANGELOGS/glossary.changes.md
@@ -41,13 +41,13 @@ Material hierarchy: lecture → topic → segment → atom.
 
 - **link** (связь) — A directed reference from one atom to another,
   expressing a sense dependency between them.
-- **refines** (уточняет; связь «уточнения») — A directed link type by
+- **refines** (уточняет) — A directed link type (связь «уточнения») by
   which a new concept (denoted by a new term) is introduced by adding a
   refining sense to the source concept.
-- **extends** (расширяет; связь «расширения») — A directed link type by
+- **extends** (расширяет) — A directed link type (связь «расширения») by
   which a new sense (with its own unique name in the name space) is
   added to an existing concept without introducing a new term.
-- **requires** (опирается; связь «опора») — A directed link type
+- **requires** (опирается) — A directed link type (связь «опора»)
   indicating that understanding a definition requires prior
   understanding of the target term (concept).
 
@@ -64,22 +64,22 @@ Material hierarchy: lecture → topic → segment → atom.
 
 ## 5. Roles
 
-- **Professor** (Профессор; human) — Sets the teaching concept and
+- **Professor** (Профессор) — A human who sets the teaching concept and
   methodology and the core content of the course; the authority over
   the curriculum; may intervene at any point.
-- **Docent** (Доцент; AI agent) — Acts as the teacher during study:
+- **Docent** (Доцент) — An AI agent that acts as the teacher during study:
   explains, forms assignments and checks, controls mastery and adjusts
   the program under the Professor's oversight.
-- **Assistant** (Ассистент; AI agent) — Helps the Professor prepare
+- **Assistant** (Ассистент) — An AI agent that helps the Professor prepare
   materials: drafts of definitions, examples and assignments, an
   approximate study order.
-- **Technician** (Лаборант; software) — Performs well-algorithmizable
+- **Technician** (Лаборант) — Software that performs well-algorithmizable
   tasks in aid of the Assistant and the Docent.
 
 ## 6. Projects and participants
 
-- **Core Project** (Проект ядра; Ядро / Core) — The repository and the
-  set of artifacts that define the teaching methodology and the
+- **Core Project** (Проект ядра) — Also «Ядро» / Core: the repository and
+  the set of artifacts that define the teaching methodology and the
   learning tools.
 - **Learning Project** (Учебный проект) — The target project (the
   course working directory) into which Core components are deployed
