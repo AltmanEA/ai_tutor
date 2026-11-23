@@ -1,0 +1,1 @@
+<!-- CHANGES v0.1.0: Initial format specification per Council session sess-material-format-2026-11-23 (file model, atoms, markers, scoped-bold terms, braces links, two-level validation contract); approved by operator 2026-11-23 -->

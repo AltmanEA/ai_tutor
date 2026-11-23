@@ -20,6 +20,14 @@ documents:
     has_translation: docs/ru/glossary/index-RU.md
     changelog-path: CHANGELOGS/glossary.changes.md
 
+  - id: material-format
+    path: docs/en/material-format/index.md
+    title: Material Format
+    version: 0.1.0
+    status: draft
+    abstraction: format
+    changelog-path: CHANGELOGS/material-format.changes.md
+
   - id: project-concept
     path: docs/en/project-concept/index.md
     title: ai_tutor Project Concept
